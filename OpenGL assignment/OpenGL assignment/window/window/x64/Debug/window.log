@@ -1,0 +1,12 @@
+﻿  main.cpp
+C:\Users\Ebifiri\Documents\PAU 200lvl\comp graphics\triangle\main.cpp(32,29): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
+C:\Users\Ebifiri\Documents\PAU 200lvl\comp graphics\triangle\main.cpp(32,22): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
+C:\Users\Ebifiri\Documents\PAU 200lvl\comp graphics\triangle\main.cpp(32,15): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
+glfw3.lib(input.obj) : warning LNK4099: PDB '' was not found with 'glfw3.lib(input.obj)' or at ''; linking object as if no debug info
+glfw3.lib(monitor.obj) : warning LNK4099: PDB '' was not found with 'glfw3.lib(monitor.obj)' or at ''; linking object as if no debug info
+glfw3.lib(window.obj) : warning LNK4099: PDB '' was not found with 'glfw3.lib(window.obj)' or at ''; linking object as if no debug info
+glfw3.lib(null_monitor.obj) : warning LNK4099: PDB '' was not found with 'glfw3.lib(null_monitor.obj)' or at ''; linking object as if no debug info
+glfw3.lib(null_window.obj) : warning LNK4099: PDB '' was not found with 'glfw3.lib(null_window.obj)' or at ''; linking object as if no debug info
+glfw3.lib(win32_joystick.obj) : warning LNK4099: PDB '' was not found with 'glfw3.lib(win32_joystick.obj)' or at ''; linking object as if no debug info
+glfw3.lib(win32_window.obj) : warning LNK4099: PDB '' was not found with 'glfw3.lib(win32_window.obj)' or at ''; linking object as if no debug info
+  triangle.vcxproj -> C:\Users\Ebifiri\Documents\PAU 200lvl\comp graphics\triangle\x64\Debug\triangle.exe
