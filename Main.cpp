@@ -1,177 +1,166 @@
-#include <iostream>
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include<filesystem>
+namespace fs = std::filesystem;
 
-// Shader sources
-const char* vertexShaderSource = R"(
-    #version 330 core
-    layout (location = 0) in vec3 aPos;
-    layout (location = 1) in vec3 aColor;
+#include<iostream>
+#include<glad/glad.h>
+#include<GLFW/glfw3.h>
+#include<stb/stb_image.h>
+#include<glm/glm.hpp>
+#include<glm/gtc/matrix_transform.hpp>
+#include<glm/gtc/type_ptr.hpp>
 
-    out vec3 ourColor;
+#include"Texture.h"
+#include"shaderClass.h"
+#include"VAO.h"
+#include"VBO.h"
+#include"EBO.h"
 
-    void main()
-    {
-        gl_Position = vec4(aPos, 1.0);
-        ourColor = aColor;
-    }
-)";
 
-const char* fragmentShaderSource = R"(
-    #version 330 core
-    out vec4 FragColor;
+const unsigned int width = 800;
+const unsigned int height = 800;
 
-    in vec3 ourColor;
 
-    void main()
-    {
-        FragColor = vec4(ourColor, 1.0f);
-    }
-)";
-
-// Vertices coordinates
 GLfloat vertices[] =
-{ //     COORDINATES     /        COLORS      //
-    -0.5f, 0.0f, 0.0f,     1.0f, 0.0f, 0.0f, // bottom left
-    0.5f, 0.0f, 0.0f,      1.0f, 0.0f, 0.0f, // bottom right
-    0.0f, 0.5f, 0.0f,      1.0f, 0.0f, 0.0f  // top
+{ //     COORDINATES     /        COLORS      /   TexCoord  //
+	-0.5f, 0.0f,  0.5f,     0.83f, 0.70f, 0.44f,	0.0f, 0.0f,
+	-0.5f, 0.0f, -0.5f,     0.83f, 0.70f, 0.44f,	5.0f, 0.0f,
+	 0.5f, 0.0f, -0.5f,     0.83f, 0.70f, 0.44f,	0.0f, 0.0f,
+	 0.5f, 0.0f,  0.5f,     0.83f, 0.70f, 0.44f,	5.0f, 0.0f,
+	 0.0f, 0.8f,  0.0f,     0.92f, 0.86f, 0.76f,	2.5f, 5.0f
 };
 
-// Indices for vertices order
+
 GLuint indices[] =
 {
-    0, 1, 2 // indices to form a single triangle
+	0, 1, 2,
+	0, 2, 3,
+	0, 1, 4,
+	1, 2, 4,
+	2, 3, 4,
+	3, 0, 4
 };
+
+
 
 int main()
 {
-    // Initialize GLFW
-    glfwInit();
+	glfwInit();
 
-    // Create a GLFWwindow object
-    GLFWwindow* window = glfwCreateWindow(800, 800, "Red Triangle", nullptr, nullptr);
-    if (window == nullptr)
-    {
-        std::cerr << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
-    glfwMakeContextCurrent(window);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    // Initialize GLAD
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cerr << "Failed to initialize GLAD" << std::endl;
-        return -1;
-    }
+	GLFWwindow* window = glfwCreateWindow(width, height, "Gina's Textured Pyramid", NULL, NULL);
 
-    // Create vertex shader object
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
+	if (window == NULL)
+	{
+		std::cout << "Failed to create GLFW window" << std::endl;
+		glfwTerminate();
+		return -1;
+	}
 
-    // Check for vertex shader compile errors
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cerr << "Vertex shader compilation failed:\n" << infoLog << std::endl;
-    }
+	glfwMakeContextCurrent(window);
 
-    // Create fragment shader object
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
+	gladLoadGL();
 
-    // Check for fragment shader compile errors
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cerr << "Fragment shader compilation failed:\n" << infoLog << std::endl;
-    }
+	glViewport(0, 0, width, height);
 
-    // Create shader program object
-    GLuint shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
 
-    // Check for shader program link errors
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success)
-    {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cerr << "Shader program linking failed:\n" << infoLog << std::endl;
-    }
 
-    // Delete shader objects once linked
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+	Shader shaderProgram("default.vert", "default.frag");
 
-    // Create and bind Vertex Array Object
-    GLuint VAO;
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
 
-    // Create Vertex Buffer Object and Element Buffer Object
-    GLuint VBO, EBO;
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
 
-    // Bind VBO and copy vertex data to it
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	VAO VAO1;
+	VAO1.Bind();
 
-    // Bind EBO and copy index data to it
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	VBO VBO1(vertices, sizeof(vertices));
+	EBO EBO1(indices, sizeof(indices));
 
-    // Set vertex attribute pointers
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
-    glEnableVertexAttribArray(0);
+	VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0);
+	VAO1.LinkAttrib(VBO1, 1, 3, GL_FLOAT, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	VAO1.LinkAttrib(VBO1, 2, 2, GL_FLOAT, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(1);
+	VAO1.Unbind();
+	VBO1.Unbind();
+	EBO1.Unbind();
 
-    // Unbind VAO
-    glBindVertexArray(0);
 
-    // Main loop
-    while (!glfwWindowShouldClose(window))
-    {
-        // Poll for and process events
-        glfwPollEvents();
+	GLuint uniID = glGetUniformLocation(shaderProgram.ID, "scale");
 
-        // Clear the color buffer
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
 
-        // Use shader program
-        glUseProgram(shaderProgram);
+	std::string parentDir = (fs::current_path().fs::path::parent_path()).string();
+	std::string texPath = "/Resources Files/";
 
-        // Bind VAO
-        glBindVertexArray(VAO);
+	Texture brickTex(("./brick.png"), GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
+	brickTex.texUnit(shaderProgram, "tex0", 0);
 
-        // Draw the triangle
-        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
 
-        // Unbind VAO
-        glBindVertexArray(0);
+	float rotation = 0.0f;
+	double prevTime = glfwGetTime();
 
-        // Swap the front and back buffers
-        glfwSwapBuffers(window);
-    }
 
-    // Delete allocated resources
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
-    glDeleteProgram(shaderProgram);
+	glEnable(GL_DEPTH_TEST);
 
-    // Terminate GLFW
-    glfwTerminate();
-    return 0;
+
+	while (!glfwWindowShouldClose(window))
+	{
+		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		shaderProgram.Activate();
+
+
+		double crntTime = glfwGetTime();
+		if (crntTime - prevTime >= 1 / 60)
+		{
+			rotation += 0.5f;
+			prevTime = crntTime;
+		}
+
+
+		glm::mat4 model = glm::mat4(1.0f);
+		glm::mat4 view = glm::mat4(1.0f);
+		glm::mat4 proj = glm::mat4(1.0f);
+
+
+		model = glm::rotate(model, glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
+		view = glm::translate(view, glm::vec3(0.0f, -0.5f, -2.0f));
+		proj = glm::perspective(glm::radians(45.0f), (float)width / height, 0.1f, 100.0f);
+
+
+		int modelLoc = glGetUniformLocation(shaderProgram.ID, "model");
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		int viewLoc = glGetUniformLocation(shaderProgram.ID, "view");
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		int projLoc = glGetUniformLocation(shaderProgram.ID, "proj");
+		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
+
+
+		glUniform1f(uniID, 0.5f);
+
+		brickTex.Bind();
+
+		VAO1.Bind();
+
+		glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(int), GL_UNSIGNED_INT, 0);
+
+		glfwSwapBuffers(window);
+
+		glfwPollEvents();
+	}
+
+
+
+	VAO1.Delete();
+	VBO1.Delete();
+	EBO1.Delete();
+	brickTex.Delete();
+	shaderProgram.Delete();
+
+	glfwDestroyWindow(window);
+
+	glfwTerminate();
+	return 0;
 }
